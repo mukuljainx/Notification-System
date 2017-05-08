@@ -1,0 +1,159 @@
+<head>
+    <title>Get Social</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src="bower_components/socket.io-client/dist/socket.io.min.js"></script>
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script>
+    var socket = io()
+    var userId = "";
+    var subscriptions = [];
+
+    var loadPreviousNotificationsAndSubscriptions = function(){
+        activateLoader();
+        $.get( "/notifications?userId="+userId , function() {
+        })
+        .done(function(data) {
+            if(data.status){
+                var notifications = data.notifications;
+                subscriptions = data.subscriptions;
+
+                var notificationsHTML = "";
+                for(var i =0; i<notifications.length; i++){
+                    notificationsHTML = notificationsHTML + "<li>"+ notifications[i] + "</li>";
+                }
+                $('.notifications-area').append(notificationsHTML);
+
+                for(var i =0; i<subscriptions.length; i++){
+                    $('.user-checkbox-' + subscriptions[i]).attr("checked","checked");
+                }
+            }
+            else {
+                alert('Somethings wrong');
+                //send to home page
+            }
+            deactivateLoader();
+        })
+        .fail(function() {
+            alert('error' + data.msg);
+        })
+    }
+
+    var selectUser = function(userIdx){
+        userId = userIdx;
+        //create socket by sending this id
+        socket.emit('connect user', userId);
+        $.when(loadPreviousNotificationsAndSubscriptions()).then(activateDashboard());
+    }
+
+    var activateLoader = function(){
+        $('.loader').css('display','block');
+    }
+    var deactivateLoader = function(){
+        $('.loader').css('display','none');
+    }
+
+    var activateDashboard = function(){
+        $('.user-checkbox-' + userId).css('display','none');
+        $('.user-checkbox-' + userId + '+span').css('display','none');
+        $('.user-selection').css('display','none');
+        $('.user-dashboard').css('display','block');
+    }
+
+    var activateSelection = function(){
+        $('.user-dashboard').css('display','none');
+        $('.user-selection').css('display','block');
+    }
+
+
+    var sendActivity = function () {
+        socket.emit('new activity', $('.new-activity').val());
+        $('.new-activity').val('');
+    }
+
+    var updateSubscription = function(){
+        var subscriptionsCheckboxes = $('.user-checkboxs');
+        var limit = subscriptionsCheckboxes.length;
+        var newSubscriptions = [];
+        for(var i=0; i<limit; i++){
+            if(subscriptionsCheckboxes[i].checked && subscriptions.indexOf(subscriptionsCheckboxes[i].value) === -1){
+                newSubscriptions.push(subscriptionsCheckboxes[i].value);
+                subscriptions.push(subscriptionsCheckboxes[i].value);
+            }
+        }
+        if(newSubscriptions.length > 0){
+            var data = {
+                userId: userId,
+                subscriptions : newSubscriptions,
+            }
+            postAPI('/subscribe',data)
+        }
+    }
+
+    var postAPI = function(url,data){
+        activateLoader();
+        $.post( {
+                url: url,
+                contentType: 'application/json; charset=utf-8',
+                dataType : 'json',
+                data: JSON.stringify(data)
+            })
+            .done(function( data ) {
+                alert(data)
+            })
+            .fail(function(response) {
+                alert(response);
+            });
+            deactivateLoader();
+    }
+    var notification = function(notificationx){
+        var notificationHTML = "<div class='notification-box'>" + notificationx + "</div>";
+        $('.notification-central').append(notificationHTML);
+        $('.notification-box').fadeOut(2000);
+    }
+    // 'chat message' is for the id of the socket and $('#new-area') is for the text area
+    socket.on('new notification', function(notificationx){
+        notification(notificationx);
+        $('.notifications-area').append($('<li>').text(notificationx));
+    });
+    </script>
+    </head>
+    <body>
+        <div class="notification-central"></div>
+        <div class="user-subscription">
+            <h2>Instruction</h2>
+            <p>1. Select user to act as it (say "A").
+            <p>2. Open other tab and select any user which is subscribed to previous (say "D").
+            <p>3. Create activity in A.
+            <p>4. By default subscriptions list is(can be modified after selecting a user).
+            <p> B <- {C,D}  </p>
+            <p> A <- {B,D,E}  </p>
+            <p> E <- {C}  </p>
+        </div>
+        <div class="user-selection">
+            <h2>Select a User</h2>
+            <ol>
+                <% for(var i=0; i<users.length; i++) {%>
+                    <li onclick="selectUser('<%= users[i] %>')"><%= users[i] %></li>
+                <% } %>
+            </ol>
+        </div>
+        <div class="user-dashboard">
+            <h2>Subscriptions</h2>
+            <div class="subscriptions">
+                <% for(var i=0; i<users.length; i++) {%>
+                    <input class="user-checkbox-<%= users[i] %> user-checkboxs" type="checkbox" name="<%= users[i] %>" value="<%= users[i] %>" > <span><%= users[i] %></span>
+                <% } %>
+                <a onclick="updateSubscription()" href="#">Update</a>
+            </div>
+            <h2>Notifications</h2>
+            <ul class="notifications-area"></ul>
+            <h2>Create Activity</h2>
+            <form class="form" onsubmit="return false;">
+                <input class="new-activity" type="text" /><button onclick="sendActivity()">Update</button>
+            </form>
+        </div>
+
+        <div class="loader">
+            <p>Getting things ready...</p>
+        </div>
+    </body>

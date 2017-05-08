@@ -1,0 +1,26 @@
+{
+  "name": "socailCops",
+  "description": "intern task",
+  "main": "bin/www",
+  "authors": [
+    "Mukul Jain <jainmukul1996@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "sockets",
+    "mongodb",
+    "real-time",
+    "notification"
+  ],
+  "homepage": "interntask.mukuljain.me",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.2.1"
+  }
+}
