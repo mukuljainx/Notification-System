@@ -107,7 +107,7 @@ io.on('connection', function(socket){
                 //notify all
                 for(var i=0; i < subscribers.length; i++){
                     if(connectedUserToSocket[subscribers[i]]){
-                        io.to(connectedUserToSocket[subscribers[i]]).emit('new notification', activity);
+                        io.to(connectedUserToSocket[subscribers[i]]).emit('new notification',userId + ": "+ activity);
                     }
                 };
             }
