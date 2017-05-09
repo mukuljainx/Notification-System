@@ -95,7 +95,7 @@ io.on('connection', function(socket){
 
                 for(var i=0; i < subscribers.length; i++){
                     bulk.find({'userId': subscribers[i]}).update({
-                        $push : {notifications: activity},
+                        $push : {notifications: userId + ": " + activity},
                     });
                 }
                 bulk.execute(function(err, result){
